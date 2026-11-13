@@ -831,6 +831,7 @@ const en = {
   footer: {
     tagline: "Education Life Center USA is the United States sister of the SLCA education-life project in Laos, now being prepared in Oklahoma City.",
     fineSummary: "The fine print — fees, money, and the lines we hold",
+    visitors: "Visitors",
   },
   common: {
     details: "Details",
@@ -1650,6 +1651,7 @@ const es: Dict = {
   footer: {
     tagline: "Education Life Center USA es el hermano estadounidense del proyecto de vida educativa SLCA en Laos, ahora en preparación en Oklahoma City.",
     fineSummary: "La letra pequeña — tarifas, dinero y las líneas que mantenemos",
+    visitors: "Visitantes",
   },
   common: { details: "Detalles", showDetails: "Mostrar detalles" },
 };
@@ -2215,6 +2217,7 @@ const vi: Dict = {
   footer: {
     tagline: "Education Life Center USA là tổ chức chị em tại Hoa Kỳ của dự án đời sống giáo dục SLCA ở Lào, hiện đang được chuẩn bị tại Oklahoma City.",
     fineSummary: "Phần chữ nhỏ — phí, tiền bạc và những giới hạn chúng tôi giữ",
+    visitors: "Lượt truy cập",
   },
   memberPipeline: {
     appTitle: "Đơn đăng ký thành viên — quy trình người tham gia",
@@ -3029,6 +3032,7 @@ const zh: Dict = {
   footer: {
     tagline: "Education Life Center USA 是老挝 SLCA 教育生活项目在美国的姊妹项目，目前正在 Oklahoma City 筹备。",
     fineSummary: "小字条款 — 费用、资金和我们坚守的界限",
+    visitors: "访客",
   },
   memberPipeline: {
     appTitle: "会员申请 — 参与者流程",
@@ -3842,6 +3846,7 @@ const lo: Dict = {
   footer: {
     tagline: "Education Life Center USA ແມ່ນໂຄງການເອື້ອຍນ້ອງຂອງສະຫະລັດຂອງໂຄງການຊີວິດການສຶກສາ SLCA ໃນລາວ, ກຳລັງກະກຽມຢູ່ Oklahoma City.",
     fineSummary: "ຂໍ້ຄວາມນ້ອຍໆ — ຄ່າທຳນຽມ, ເງິນ, ແລະ ເສັ້ນທີ່ພວກເຮົາຖືໄວ້",
+    visitors: "ຜູ້ເຂົ້າຊົມ",
   },
   memberPipeline: {
     appTitle: "ແບບຟອມສະໝັກສະມາຊິກ — ຂັ້ນຕອນຂອງຜູ້ເຂົ້າຮ່ວມ",
@@ -4658,6 +4663,7 @@ const hi: Dict = {
   footer: {
     tagline: "Education Life Center USA लाओस में SLCA शिक्षा-जीवन परियोजना की संयुक्त राज्य की बहन है, जो अभी Oklahoma City में तैयार की जा रही है।",
     fineSummary: "बारीक अक्षर — शुल्क, पैसा, और वे रेखाएँ जो हम रखते हैं",
+    visitors: "आगंतुक",
   },
   memberPipeline: {
     appTitle: "सदस्यता आवेदन — प्रतिभागी प्रक्रिया",
