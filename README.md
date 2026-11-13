@@ -18,7 +18,7 @@ Build: `npm install` → `npm run build`. Deploy: `npx wrangler deploy` (or conn
 ## Also in this repo
 
 - `DATA-PLAN.md` — the system's data and interpretation record (prices, rulings, language decisions).
-- `client/`, `server/`, `drizzle/`, `space.json` — the retired Muse-space original of this same system, kept for reference. The Cloudflare port above is the live deployment; the original continues to run in the owner's Muse library until the domain cutover is verified.
+- `client/`, `server/`, `drizzle/` — the retired Muse-space original of this same system, kept for reference. The Cloudflare port above is the live deployment; the original continues to run in the owner's Muse library until the domain cutover is verified.
 
 ## Ownership
 
