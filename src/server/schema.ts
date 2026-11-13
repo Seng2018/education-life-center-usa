@@ -520,3 +520,17 @@ export const payments = sqliteTable("payments", {
     .notNull()
     .$defaultFn(() => new Date()),
 });
+
+// Visitor counter (2026-11-13): the site's own visit log — one row per
+// tracked page visit. The country comes from Cloudflare's request.cf on
+// the incoming request ("XX" when unknown), recorded by the trackVisit
+// action and read back by getVisitorStats for the footer visitors line.
+// It holds no visitor identity — counts and countries only.
+export const visits = sqliteTable("visits", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  path: text("path"),
+  country: text("country"),
+  createdAt: text("created_at")
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+});
