@@ -28,5 +28,6 @@ binding = "DB"
 database_name = "education-life-center-usa"
 # ↓ OWNER: replace this placeholder with the real Database ID that the
 #   dashboard shows when the D1 database is created.
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "07f4b662-7409-41f5-a834-8af0ecaca51a
+"
 migrations_dir = "migrations"
