@@ -23,3 +23,4 @@ Build: `npm install` → `npm run build`. Deploy: `npx wrangler deploy` (or conn
 ## Ownership
 
 © 2026 Education Life Center USA, LLC project — Founder: Saly (Lan Xang Digital). Domain: educationlifecenterusa.com (registered 13 Nov 2026, Cloudflare).
+- Live site: https://educationlifecenterusa.com (formation mode)
