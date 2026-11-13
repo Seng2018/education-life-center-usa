@@ -91,6 +91,11 @@ import type { DrizzleD1Database } from "drizzle-orm/d1";
 export interface Ctx {
   db<S = typeof schema>(): DrizzleD1Database<typeof schema>;
   invalidateQueries(): void;
+  // Visitor country of the current request (Cloudflare's request.cf,
+  // populated by the Worker in src/worker.ts). Undefined when the
+  // request carries no cf data (e.g. local dev) — trackVisit stores
+  // "XX" in that case.
+  clientCountry?: string;
   inference: {
     complete(
       prompt: string,
@@ -1370,6 +1375,53 @@ export const ActionDefs = {
         casePricing: publicPricing(casePricingFor(completedCases)),
         withdrawalPricing: WITHDRAWAL_PRICING,
       };
+    },
+  }),
+
+  trackVisit: defineAction({
+    description:
+      "Records ONE page visit for the site's own visitor counter: a row in `visits` holding only the path and the visitor's country, taken from Cloudflare's request.cf on the incoming request (\"XX\" when the request carries no country). Public and unauthenticated by design — it accepts nothing that could identify a visitor, and the client calls it once per browser session, fire-and-forget. Not gated by FORMATION_MODE: the counter runs while the Center is in formation, like the waitlist.",
+    request: z.object({
+      path: z.string().max(300).optional(),
+    }),
+    response: okResponse,
+    handler: async (ctx, args) => {
+      const db = ctx.db<typeof schema>();
+      await db.insert(schema.visits).values({
+        path: args.path ?? null,
+        country: ctx.clientCountry ?? "XX",
+      });
+      return { ok: true as const };
+    },
+  }),
+
+  getVisitorStats: defineAction({
+    description:
+      "Returns the visitor counter's public totals for the footer visitors line: the total number of tracked visits and the top 10 countries by visit count. Counts and country codes only — no paths, no timestamps, nothing that identifies a visitor. Public and unauthenticated, like getPublicStats.",
+    request: z.object({}),
+    response: z.object({
+      total: z.number(),
+      countries: z.array(
+        z.object({ country: z.string(), count: z.number() }),
+      ),
+    }),
+    handler: async (ctx) => {
+      const db = ctx.db<typeof schema>();
+      const rows = await db
+        .select({ country: schema.visits.country })
+        .from(schema.visits);
+      const byCountry = new Map<string, number>();
+      for (const row of rows) {
+        const country = row.country ?? "XX";
+        byCountry.set(country, (byCountry.get(country) ?? 0) + 1);
+      }
+      const countries = [...byCountry.entries()]
+        .map(([country, count]) => ({ country, count }))
+        .sort(
+          (a, b) => b.count - a.count || a.country.localeCompare(b.country),
+        )
+        .slice(0, 10);
+      return { total: rows.length, countries };
     },
   }),
 
