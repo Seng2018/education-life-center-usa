@@ -1,0 +1,8 @@
+{
+  "runtime": "typescript",
+  "platformVersion": 28,
+  "entry": "client/dist/index.html",
+  "name": "Education Life Center USA",
+  "slug": "education-life-center-usa",
+  "managedCronJobs": []
+}
