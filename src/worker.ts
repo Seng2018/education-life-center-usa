@@ -39,11 +39,17 @@ const ASSISTANT_FALLBACK = {
   needsHuman: true,
 };
 
-function makeCtx(env: Env): Ctx {
+function makeCtx(env: Env, request: Request): Ctx {
   const db = drizzle(env.DB, { schema });
+  // Cloudflare attaches the request's geolocation as request.cf; the
+  // visitor counter (trackVisit) reads only the country from it.
+  const cfCountry = (request as Request & { cf?: { country?: unknown } }).cf
+    ?.country;
   return {
     db: () => db,
     invalidateQueries: () => {},
+    clientCountry:
+      typeof cfCountry === "string" && cfCountry ? cfCountry : undefined,
     agent: {
       // No email agent exists in this port: delivery stays "on its way".
       // Callers (generateEmailReports, confirmBankPayment) wrap this in
@@ -126,7 +132,7 @@ export default {
         return json({ error: message || "The request was not valid." }, 400);
       }
       try {
-        const result = await def.handler(makeCtx(env), parsed.data);
+        const result = await def.handler(makeCtx(env, request), parsed.data);
         return json(result ?? { ok: true });
       } catch (err) {
         return json(
