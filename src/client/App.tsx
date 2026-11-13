@@ -290,6 +290,16 @@ const PARKED_SERVICES = [
   },
 ];
 
+// Regional-indicator flag emoji for a 2-letter country code ("US" → 🇺🇸).
+// Returns "" for anything that is not exactly two A–Z letters, so an
+// unknown code ("XX") simply shows no flag.
+function countryFlag(code: string): string {
+  if (!/^[A-Z]{2}$/.test(code)) return "";
+  return String.fromCodePoint(
+    ...[...code].map((ch) => 0x1f1e6 + ch.charCodeAt(0) - 65),
+  );
+}
+
 export function App() {
   return (
     <LangProvider>
@@ -335,6 +345,28 @@ function AppInner() {
   const stats = useQuery({
     queryKey: ["public-stats"],
     queryFn: () => api.getPublicStats({}),
+  });
+
+  // Visitor counter: record one visit per browser session (fire-and-
+  // forget — a failed call changes nothing on the page), then read the
+  // totals back for the footer visitors line.
+  useEffect(() => {
+    try {
+      if (!window.sessionStorage.getItem("elc-visit-tracked")) {
+        window.sessionStorage.setItem("elc-visit-tracked", "1");
+        void api
+          .trackVisit({ path: window.location.pathname })
+          .catch(() => {});
+      }
+    } catch {
+      /* storage unavailable in this frame — skip tracking this session */
+    }
+  }, []);
+
+  const visitorStats = useQuery({
+    queryKey: ["visitor-stats"],
+    queryFn: () => api.getVisitorStats({}),
+    retry: false,
   });
 
   const dashboard = useQuery({
@@ -850,6 +882,17 @@ function AppInner() {
             </p>
           </Details>
           <p className="mt-3">© 2026 Education Life Center USA</p>
+          {visitorStats.data && (
+            <p className="mt-2">
+              {t.footer.visitors}: {visitorStats.data.total.toLocaleString()}
+              {visitorStats.data.countries
+                .filter((c) => c.country !== "XX")
+                .slice(0, 5)
+                .map((c) => (
+                  <span key={c.country}> {countryFlag(c.country)}</span>
+                ))}
+            </p>
+          )}
         </footer>
       </main>
       <AssistantPanel />
