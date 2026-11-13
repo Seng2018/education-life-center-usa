@@ -1,0 +1,32 @@
+# Education Life Center USA — Cloudflare Workers configuration (port, 2026-11-13).
+#
+# One Worker serves everything at educationlifecenterusa.com:
+#   - POST /api/<action>  → the app's action handlers (src/worker.ts),
+#                           run by the Worker first (run_worker_first);
+#   - everything else     → the built client in ./dist (static assets).
+#
+# OWNER SETUP (see PORT-DELIVERY.md for the full numbered steps):
+#   1. Create the D1 database named "education-life-center-usa" in the
+#      Cloudflare dashboard, then paste its generated Database ID below,
+#      replacing the placeholder on the database_id line.
+#   2. Apply the schema: either `npm run db:migrate:remote` with wrangler
+#      (needs your Cloudflare login), or paste db/schema.sql and then
+#      db/seed-jobs.sql into the D1 console, in that order.
+
+name = "education-life-center-usa"
+main = "src/worker.ts"
+compatibility_date = "2025-11-01"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+not_found_handling = "single-page-application"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "education-life-center-usa"
+# ↓ OWNER: replace this placeholder with the real Database ID that the
+#   dashboard shows when the D1 database is created.
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"

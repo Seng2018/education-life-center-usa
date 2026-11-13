@@ -1,7 +1,5 @@
 node_modules/
 dist/
-*.db
-.bun-cache/
-.harness/
-.space-build/
-audits/
+.wrangler/
+.dev.vars
+*.log

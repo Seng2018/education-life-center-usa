@@ -1,23 +1,24 @@
 # Education Life Center USA — website & member system
 
-The online system for **Education Life Center USA, LLC** (Oklahoma City): the public website plus the member machinery behind it.
+The online system for **Education Life Center USA, LLC** (Oklahoma City), running on **Cloudflare Workers + D1** at **educationlifecenterusa.com**.
 
-- Public site in six languages (English, Español, Tiếng Việt, 中文, ລາວ, हिन्दी): the $99→$149 guided 529 case door, Guided Withdrawal sittings ($199), membership tiers ($15 / $25 / $40), the interactive self-service doors with journey tracking and email reports, and a public "closing soon" preview of Job Promotion.
-- Members-only area (server-enforced): the Job Promotion board, Member Card application, Family Credit Support application.
-- Participant pipeline: online application → fee invoice with the member's own bank payment reference → bank payment confirmed in operations → membership activates automatically → electronic member card (QR) issued → partner-store verification (validity, tier, status only).
-- Admin operations behind a staff code: all live numbers are private, never public.
+> **Status: FORMATION MODE.** The membership waitlist is live and saving names. The $99→$149 guided 529 case door and the $199 Guided Withdrawal sittings are presented as *opening soon / in formation* and take no cases; **no fees are collected and no payment step is active** until the LLC is filed and its bank account exists. One flag (`FORMATION_MODE` in `src/server/actions.ts`) lifts the mode on opening day.
 
-## Structure
+## The live project (Cloudflare port, 2026-11-13)
 
-- `client/` — the website (React + TypeScript): `client/src` holds all pages, the six language dictionaries and the header/layout.
-- `server/` — the system's actions (database, pipeline, journeys, admin, card verification): `server/src/actions.ts`.
-- `drizzle/` — database migrations (the full schema history).
+- `src/worker.ts` — the Worker: `POST /api/<action>` runs the system's actions; every other path serves the built client.
+- `src/server/` — the action handlers and schema (ported intact from the reference system: prices, formation gates, members-only jobs lock, staff admin gate with a salted PBKDF2 verifier — no plaintext code anywhere).
+- `src/client/` — the website (React, six languages: English, Español, Tiếng Việt, 中文, ລາວ, हिन्दी).
+- `migrations/` — D1 migrations 0001–0015. `db/schema.sql` is the same schema as one console-paste file; `db/seed-jobs.sql` seeds the 15 researched job listings.
+- `wrangler.toml` — Worker, assets and D1 configuration (the `database_id` is filled in by the owner at setup).
+- `PORT-DELIVERY.md` — what was built, the local verification results, and the owner's numbered Cloudflare setup steps.
+
+Build: `npm install` → `npm run build`. Deploy: `npx wrangler deploy` (or connect this repo in Cloudflare → Workers & Pages → Import from Git, with those same commands).
+
+## Also in this repo
+
 - `DATA-PLAN.md` — the system's data and interpretation record (prices, rulings, language decisions).
-- `space.json`, `package.json`, `bun.lock` — runtime configuration and dependencies.
-
-## Running it
-
-The system currently runs on the Muse spaces runtime (its server uses `@hatch/space-sdk`, a local runtime dependency declared in `package.json`). This repository is the project's source of record under the owner's GitHub account. Serving the public pages from this repo through Cloudflare follows the same pattern as edu-secu.com; running the full member machinery (accounts, database, email reports) on Cloudflare requires porting the server layer to Cloudflare Workers + D1 — a separate step, not a plain upload.
+- `client/`, `server/`, `drizzle/`, `space.json` — the retired Muse-space original of this same system, kept for reference. The Cloudflare port above is the live deployment; the original continues to run in the owner's Muse library until the domain cutover is verified.
 
 ## Ownership
 
