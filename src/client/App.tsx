@@ -430,7 +430,7 @@ function AppInner() {
               </a>
             </div>
           </div>
-          <nav aria-label="Main" className="flex items-center gap-x-4 gap-y-1 overflow-x-auto border-t border-white/15 py-2 text-lg font-medium text-white/90 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <nav aria-label="Main" className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-white/15 py-2 text-base font-medium text-white/90 md:text-lg">
             <a href="#glance" className="whitespace-nowrap hover:text-white hover:underline">{t.nav.glance}</a>
             <a href="#case529" className="whitespace-nowrap hover:text-white hover:underline">{t.nav.caseLink} — ${nextCaseFee}</a>
             <a href="#withdrawal" className="whitespace-nowrap hover:text-white hover:underline">{t.nav.withdrawal} — ${withdrawalFee}</a>
