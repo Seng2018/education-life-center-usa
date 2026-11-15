@@ -1203,6 +1203,8 @@ function OnBoardSection({
         ))}
       </dl>
 
+      <p className="mt-5 text-lg font-semibold">{t.train.families}</p>
+
       <div className="mt-6 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
         <p className="text-base text-[var(--dim)]">
           <strong className="text-[var(--text)]">{t.train.bodyStrong}</strong> {t.train.bodyRest} (${nextFee})
