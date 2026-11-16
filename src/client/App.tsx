@@ -441,6 +441,7 @@ function AppInner() {
             <a href="#jobs" className="whitespace-nowrap hover:text-white hover:underline">{t.nav.jobs}</a>
             <a href="#partners" className="whitespace-nowrap hover:text-white hover:underline">{t.nav.partners}</a>
             <a href="#doors" className="whitespace-nowrap hover:text-white hover:underline">{t.nav.doors}</a>
+            <a href="#intl" className="whitespace-nowrap hover:text-white hover:underline">{t.nav.intl}</a>
             <a href="#journey" className="whitespace-nowrap hover:text-white hover:underline">{t.nav.journey}</a>
             <a href="#admin" className="whitespace-nowrap hover:text-white hover:underline">{t.nav.admin}</a>
           </nav>
@@ -557,6 +558,7 @@ function AppInner() {
 
         {/* ---------- Self-service doors + the family journey ---------- */}
         <DoorsAndJourney />
+        <IntlStudentsSection />
 
         {/* ---------- For parents: why the Center, using the fund, the benefits ---------- */}
         <ParentsBenefitsSection casePricing={casePricing} withdrawalPricing={withdrawalPricing} />
@@ -910,6 +912,53 @@ function AppInner() {
 // never a loan — money comes out only by withdrawal; withdrawal timings
 // are typical-practice estimates, not state guarantees.
 // ---------------------------------------------------------------------------
+
+function IntlStudentsSection() {
+  const { t } = useLang();
+  const visas = [t.intl.f1, t.intl.j1, t.intl.m1];
+  return (
+    <section id="intl" aria-label={t.intl.title} className="py-10">
+      <SectionWithLogo sub={t.intl.sub}>{t.intl.title}</SectionWithLogo>
+      <div className="grid gap-4 md:grid-cols-3">
+        {visas.map((v) => (
+          <article key={v.tag} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
+            <h3 className="font-display text-lg font-semibold leading-snug">{v.tag}</h3>
+            <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-[#14532d]">{t.intl.openLabel}</p>
+            <ul className="mt-1 space-y-1 text-sm text-[var(--dim)]">
+              {v.open.map((s) => (
+                <li key={s}>✓ {s}</li>
+              ))}
+            </ul>
+            <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-red-700">{t.intl.closedLabel}</p>
+            <ul className="mt-1 space-y-1 text-sm text-[var(--dim)]">
+              {v.closed.map((s) => (
+                <li key={s}>✕ {s}</li>
+              ))}
+            </ul>
+            {v.limited ? (
+              <p className="mt-3 rounded-lg bg-[var(--gold-soft)] p-3 text-sm font-medium">
+                {t.intl.limitedLabel}: {v.limited}
+              </p>
+            ) : null}
+          </article>
+        ))}
+      </div>
+      <article className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
+        <h3 className="font-display text-lg font-semibold">{t.intl.depTitle}</h3>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[var(--dim)]">
+          {t.intl.dep.map((s) => (
+            <li key={s}>{s}</li>
+          ))}
+        </ul>
+      </article>
+      <p className="mt-4 rounded-lg bg-[var(--gold-soft)] px-4 py-3 text-sm">
+        <strong>{t.intl.noncitizen}</strong>
+      </p>
+      <p className="mt-3 text-base text-[var(--dim)]">{t.intl.note529}</p>
+      <p className="mt-3 text-xs text-[var(--dim)]">{t.intl.disclaimer}</p>
+    </section>
+  );
+}
 
 function ParentsBenefitsSection({ casePricing, withdrawalPricing }: { casePricing: CasePricing; withdrawalPricing: WithdrawalPricing }) {
   const { t } = useLang();
