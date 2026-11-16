@@ -3311,8 +3311,8 @@ function DoorsAndJourney() {
             if (!door || !pays) return null;
             const p = progressOf(id);
             return (
-              <li key={id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
-                <div className="min-w-0 flex-1">
+              <li key={id} className="flex flex-col gap-2 px-4 py-3">
+                <div className="min-w-0">
                   <p className="font-semibold leading-snug">{door.name}</p>
                   <p className="text-sm text-[var(--dim)]">{pays}</p>
                   <p className="mt-0.5 text-xs font-medium text-[var(--good)]">{t.doors.noFeeLine}</p>
@@ -3329,7 +3329,7 @@ function DoorsAndJourney() {
                   href={door.url}
                   target="_blank"
                   rel="noreferrer"
-                  className={btnGhost}
+                  className={`${btnGhost} w-full sm:w-auto sm:self-start`}
                   onClick={() => onRegisterClick(id)}
                 >
                   {t.doors.registerBtn} ↗
@@ -3337,7 +3337,7 @@ function DoorsAndJourney() {
                 {activeEmail.includes("@") && view && p?.status !== "completed" ? (
                   <button
                     type="button"
-                    className="text-sm font-semibold text-[var(--good)] underline"
+                    className="self-start text-sm font-semibold text-[var(--good)] underline"
                     disabled={complete.isPending}
                     onClick={() => complete.mutate(id)}
                   >
