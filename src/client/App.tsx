@@ -800,8 +800,7 @@ function AppInner() {
           </section>
         )}
 
-        {/* ---------- Jobs: public closing-soon preview, then the members-only board ---------- */}
-        <JobsPreviewSection />
+        {/* ---------- Jobs: the members-only board ---------- */}
         <JobsSection memberId={memberId} memberEmail={memberEmail} />
 
         {/* ---------- Partners ---------- */}
@@ -2749,51 +2748,6 @@ function ServiceApplicationsPanel({ data }: { data: Dashboard }) {
 // ---------------------------------------------------------------------------
 // Job Promotion board
 // ---------------------------------------------------------------------------
-
-// PUBLIC PREVIEW (Founder, 2026-11-13): exactly three verified openings
-// that close within days are shown to everyone as a "closing soon"
-// preview of Job Promotion. These three are hard-coded public content
-// with their official application links (from the 2026-11-13 verified
-// research report); the full board of 15 stays members-only behind the
-// lock in JobsSection, and no other listing is exposed here.
-const PREVIEW_APPLY_URLS = [
-  "https://oklahomadepartmentofhumanservices.applytojob.com/apply/Qs4mK88H5c/Case-Manager-III-Hiring-Event-11172026-OKC",
-  "https://www.usajobs.gov/job/891357800",
-  "https://fa-etyr-saasfaprod1.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_2/job/4365/?mode=job-location",
-];
-
-function JobsPreviewSection() {
-  const { t } = useLang();
-  return (
-    <section id="jobs-preview" aria-label={t.jobs.preview.title} className="py-10">
-      <SectionWithLogo sub={t.jobs.preview.sub}>
-        {t.jobs.preview.title}
-      </SectionWithLogo>
-      <div className="grid gap-4 md:grid-cols-3">
-        {t.jobs.preview.items.map((job, i) => (
-          <article key={job.title} className="flex flex-col rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
-            <h3 className="font-display text-xl font-semibold">{job.title}</h3>
-            <p className="text-sm text-[var(--dim)]">
-              {job.employer} · {job.location}
-            </p>
-            <p className="mt-2 text-base font-bold text-red-700">{job.deadline}</p>
-            <p className="mt-2 text-base font-medium">{job.pay}</p>
-            <p className="mt-2 text-base text-[var(--dim)]">{job.detail}</p>
-            <p className="mt-2 text-sm text-[var(--dim)]">
-              {t.jobs.verifiedLine.replace("{date}", fmtDate("2026-11-13T12:00:00"))}
-            </p>
-            <div className="mt-auto pt-4">
-              <a href={PREVIEW_APPLY_URLS[i] ?? "#"} target="_blank" rel="noreferrer" className={btnPrimary}>
-                {t.jobs.applyOfficial}
-              </a>
-            </div>
-          </article>
-        ))}
-      </div>
-      <p className="mt-4 max-w-3xl text-base text-[var(--dim)]">{t.jobs.preview.membersNote}</p>
-    </section>
-  );
-}
 
 function JobsSection({ memberId, memberEmail }: { memberId: number | null; memberEmail: string | null }) {
   const { t } = useLang();
