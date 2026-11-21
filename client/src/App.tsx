@@ -72,7 +72,7 @@
 
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { SafeAreaTopScrim } from "@hatch/space-sdk/client";
+import { SafeAreaTopScrim } from "./SafeAreaTopScrim";
 import { api, type ApiRequest, type ApiResponse } from "./api";
 import { LangProvider, useLang, LANG_OPTIONS, type Lang } from "./i18n";
 import { qrMatrix } from "./qr";
@@ -80,6 +80,7 @@ import campusImg from "./assets/campus-students.jpg";
 import familyImg from "./assets/family-backpack.jpg";
 import okcImg from "./assets/okc-skyline.jpg";
 import logoImg from "./assets/logo-elc-usa.webp";
+import companionImg from "./assets/ai-companion-walk.webp";
 
 type Dashboard = ApiResponse<typeof api, "getDashboard">;
 type Member = Dashboard["member"];
@@ -101,6 +102,18 @@ const DEFAULT_CASE_PRICING: CasePricing = {
 // One simple price (Founder's fee ruling, 2026-11-12): $199 flat per
 // completed guided withdrawal sitting.
 const DEFAULT_WITHDRAWAL_PRICING: WithdrawalPricing = { fee: 199 };
+
+// FORMATION MODE (Founder, 2026-11-13): the site publishes in formation
+// mode until Education Life Center USA, LLC is filed and its bank
+// account exists. While true, the $99 case door and the $199 guided
+// withdrawal sittings show an "opening soon — in formation" notice
+// instead of their intake forms (the server refuses the intakes too),
+// there is no payment step anywhere on the page, and the membership
+// waitlist is the live intake. The members-only jobs lock and the
+// admin gate are unchanged. Flip to false — here and FORMATION_MODE
+// in server/src/actions.ts — when the LLC is filed and the company
+// bank account is open; the forms below then take over again.
+const FORMATION_MODE = true;
 
 const TIER_OPTIONS = [
   {
@@ -278,6 +291,16 @@ const PARKED_SERVICES = [
   },
 ];
 
+// Regional-indicator flag emoji for a 2-letter country code ("US" → 🇺🇸).
+// Returns "" for anything that is not exactly two A–Z letters, so an
+// unknown code ("XX") simply shows no flag.
+function countryFlag(code: string): string {
+  if (!/^[A-Z]{2}$/.test(code)) return "";
+  return String.fromCodePoint(
+    ...[...code].map((ch) => 0x1f1e6 + ch.charCodeAt(0) - 65),
+  );
+}
+
 export function App() {
   return (
     <LangProvider>
@@ -324,6 +347,22 @@ function AppInner() {
     queryKey: ["public-stats"],
     queryFn: () => api.getPublicStats({}),
   });
+
+  // Visitor counter: record one visit per browser session (fire-and-
+  // forget — a failed call changes nothing on the page). The totals are
+  // shown only in the Admin area (Founder, 2026-11-20).
+  useEffect(() => {
+    try {
+      if (!window.sessionStorage.getItem("elc-visit-tracked")) {
+        window.sessionStorage.setItem("elc-visit-tracked", "1");
+        void api
+          .trackVisit({ path: window.location.pathname })
+          .catch(() => {});
+      }
+    } catch {
+      /* storage unavailable in this frame — skip tracking this session */
+    }
+  }, []);
 
   const dashboard = useQuery({
     queryKey: ["dashboard", memberEmail],
@@ -382,11 +421,11 @@ function AppInner() {
                 ))}
               </select>
               <a href={memberEmail == null ? "#case529" : "#dashboard"} className="hidden shrink-0 items-center justify-center rounded-lg bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#16294d] min-[480px]:inline-flex">
-                {memberEmail == null ? t.nav.startCase : t.nav.dashboard}
+                {memberEmail == null ? (FORMATION_MODE ? t.formation.caseDoorSoon : t.nav.startCase) : t.nav.dashboard}
               </a>
             </div>
           </div>
-          <nav aria-label="Main" className="flex items-center gap-x-4 gap-y-1 overflow-x-auto border-t border-white/15 py-2 text-lg font-medium text-white/90 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <nav aria-label="Main" className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-white/15 py-2 text-base font-medium text-white/90 md:text-lg">
             <a href="#glance" className="whitespace-nowrap hover:text-white hover:underline">{t.nav.glance}</a>
             <a href="#case529" className="whitespace-nowrap hover:text-white hover:underline">{t.nav.caseLink} — ${nextCaseFee}</a>
             <a href="#withdrawal" className="whitespace-nowrap hover:text-white hover:underline">{t.nav.withdrawal} — ${withdrawalFee}</a>
@@ -397,11 +436,25 @@ function AppInner() {
             <a href="#jobs" className="whitespace-nowrap hover:text-white hover:underline">{t.nav.jobs}</a>
             <a href="#partners" className="whitespace-nowrap hover:text-white hover:underline">{t.nav.partners}</a>
             <a href="#doors" className="whitespace-nowrap hover:text-white hover:underline">{t.nav.doors}</a>
+            <a href="#intl" className="whitespace-nowrap hover:text-white hover:underline">{t.nav.intl}</a>
             <a href="#journey" className="whitespace-nowrap hover:text-white hover:underline">{t.nav.journey}</a>
-            <a href="#admin" className="whitespace-nowrap hover:text-white hover:underline">{t.nav.admin}</a>
           </nav>
         </div>
       </div>
+
+      {/* ---------- Formation banner (Founder, 2026-11-13) ---------- */}
+      {FORMATION_MODE ? (
+        <div className="border-b-2 border-[var(--gold)] bg-[var(--gold-soft)]">
+          <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:gap-x-5">
+            <p className="min-w-0 flex-1 text-base">
+              <strong>{t.formation.bannerTitle}.</strong> {t.formation.bannerBody}
+            </p>
+            <a href="#subscribe" className={`${btnGold} shrink-0 self-start sm:self-auto`}>
+              {t.formation.waitlistCta}
+            </a>
+          </div>
+        </div>
+      ) : null}
 
       {/* ---------- Hero ---------- */}
       <header id="top" className="relative overflow-hidden bg-[#16294d] text-white">
@@ -430,8 +483,10 @@ function AppInner() {
             {t.hero.titleA} ${nextCaseFee}{t.hero.titlePaid}
           </h1>
           <p className="mt-4 max-w-2xl text-lg text-white/85">
-            {t.hero.bodyA} ${nextCaseFee}{t.hero.bodyPaid}{" "}
-            {casePricing.isFoundingPrice ? (
+            {FORMATION_MODE ? t.formation.heroBodyA : t.hero.bodyA} ${nextCaseFee}{t.hero.bodyPaid}{" "}
+            {FORMATION_MODE ? (
+              <>{t.formation.heroFounding}</>
+            ) : casePricing.isFoundingPrice ? (
               <>{t.hero.foundingOpen}</>
             ) : (
               <>The ${casePricing.foundingFee} {t.hero.foundingEnded} ${casePricing.standardFee}.</>
@@ -449,7 +504,7 @@ function AppInner() {
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
             <a href="#case529" className={btnGold}>
-              {t.hero.ctaCase} — ${nextCaseFee} {t.hero.ctaCaseSuffix}
+              {FORMATION_MODE ? t.formation.caseCtaSoon : `${t.hero.ctaCase} — $${nextCaseFee} ${t.hero.ctaCaseSuffix}`}
             </a>
             <a
               href="#access529"
@@ -462,6 +517,18 @@ function AppInner() {
       </header>
 
       <main className="mx-auto max-w-6xl px-4">
+        {/* ---------- The companion: she knows your child ---------- */}
+        <figure className="pt-8">
+          <img
+            src={companionImg}
+            alt={t.founderWalk.alt}
+            className="w-full rounded-2xl border border-[var(--border)]"
+          />
+          <figcaption className="font-display mt-4 text-center text-xl italic leading-snug sm:text-2xl">
+            {t.founderWalk.caption}
+          </figcaption>
+        </figure>
+
         {/* ---------- At a glance: the whole draft on one screen ---------- */}
         <section id="glance" aria-label={t.glance.title} className="py-10">
           <SectionWithLogo sub={t.glance.sub}>
@@ -470,8 +537,8 @@ function AppInner() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {t.glance.cards.map((c, i) => (
               <article key={i} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
-                <h3 className="font-display text-lg font-semibold leading-snug">{i === 0 ? `$${nextCaseFee} — ${c.t}` : c.t}</h3>
-                <p className="mt-1.5 text-sm text-[var(--dim)]">{c.d}</p>
+                <h3 className="font-display text-lg font-semibold leading-snug">{i === 0 ? `$${nextCaseFee} — ${FORMATION_MODE ? t.formation.glanceTitle : c.t}` : c.t}</h3>
+                <p className="mt-1.5 text-sm text-[var(--dim)]">{i === 0 && FORMATION_MODE ? t.formation.glanceBody : c.d}</p>
               </article>
             ))}
             <article className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
@@ -480,7 +547,7 @@ function AppInner() {
             </article>
           </div>
           <div className="mt-5 flex flex-wrap gap-3">
-            <a href="#case529" className={btnGold}>{t.glance.ctaCase} — ${nextCaseFee} {t.hero.ctaCaseSuffix}</a>
+            <a href="#case529" className={btnGold}>{FORMATION_MODE ? t.formation.caseCtaSoon : `${t.glance.ctaCase} — $${nextCaseFee} ${t.hero.ctaCaseSuffix}`}</a>
             <a href="#withdrawal" className={btnGhost}>{t.withdrawal.title.split(" — ")[0]} — ${withdrawalFee}</a>
             <a href="#subscribe" className={btnGhost}>{t.glance.ctaWaitlist}</a>
           </div>
@@ -497,6 +564,7 @@ function AppInner() {
 
         {/* ---------- Self-service doors + the family journey ---------- */}
         <DoorsAndJourney />
+        <IntlStudentsSection />
 
         {/* ---------- For parents: why the Center, using the fund, the benefits ---------- */}
         <ParentsBenefitsSection casePricing={casePricing} withdrawalPricing={withdrawalPricing} />
@@ -738,7 +806,7 @@ function AppInner() {
           </section>
         )}
 
-        {/* ---------- Jobs: public closing-soon preview, then the members-only board ---------- */}
+        {/* ---------- Jobs: public open-jobs preview, then the members-only board ---------- */}
         <JobsPreviewSection />
         <JobsSection memberId={memberId} memberEmail={memberEmail} />
 
@@ -822,6 +890,9 @@ function AppInner() {
             </p>
           </Details>
           <p className="mt-3">© 2026 Education Life Center USA</p>
+          <div className="mt-4 flex justify-end">
+            <a href="#admin" className="inline-flex items-center justify-center rounded-lg border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text)] hover:underline">{t.nav.admin}</a>
+          </div>
         </footer>
       </main>
       <AssistantPanel />
@@ -839,6 +910,53 @@ function AppInner() {
 // never a loan — money comes out only by withdrawal; withdrawal timings
 // are typical-practice estimates, not state guarantees.
 // ---------------------------------------------------------------------------
+
+function IntlStudentsSection() {
+  const { t } = useLang();
+  const visas = [t.intl.f1, t.intl.j1, t.intl.m1];
+  return (
+    <section id="intl" aria-label={t.intl.title} className="py-10">
+      <SectionWithLogo sub={t.intl.sub}>{t.intl.title}</SectionWithLogo>
+      <div className="grid gap-4 md:grid-cols-3">
+        {visas.map((v) => (
+          <article key={v.tag} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
+            <h3 className="font-display text-lg font-semibold leading-snug">{v.tag}</h3>
+            <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-[#14532d]">{t.intl.openLabel}</p>
+            <ul className="mt-1 space-y-1 text-sm text-[var(--dim)]">
+              {v.open.map((s) => (
+                <li key={s}>✓ {s}</li>
+              ))}
+            </ul>
+            <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-red-700">{t.intl.closedLabel}</p>
+            <ul className="mt-1 space-y-1 text-sm text-[var(--dim)]">
+              {v.closed.map((s) => (
+                <li key={s}>✕ {s}</li>
+              ))}
+            </ul>
+            {v.limited ? (
+              <p className="mt-3 rounded-lg bg-[var(--gold-soft)] p-3 text-sm font-medium">
+                {t.intl.limitedLabel}: {v.limited}
+              </p>
+            ) : null}
+          </article>
+        ))}
+      </div>
+      <article className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
+        <h3 className="font-display text-lg font-semibold">{t.intl.depTitle}</h3>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[var(--dim)]">
+          {t.intl.dep.map((s) => (
+            <li key={s}>{s}</li>
+          ))}
+        </ul>
+      </article>
+      <p className="mt-4 rounded-lg bg-[var(--gold-soft)] px-4 py-3 text-sm">
+        <strong>{t.intl.noncitizen}</strong>
+      </p>
+      <p className="mt-3 text-base text-[var(--dim)]">{t.intl.note529}</p>
+      <p className="mt-3 text-xs text-[var(--dim)]">{t.intl.disclaimer}</p>
+    </section>
+  );
+}
 
 function ParentsBenefitsSection({ casePricing, withdrawalPricing }: { casePricing: CasePricing; withdrawalPricing: WithdrawalPricing }) {
   const { t } = useLang();
@@ -1002,7 +1120,7 @@ function ParentsBenefitsSection({ casePricing, withdrawalPricing }: { casePricin
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <article className="rounded-xl border-2 border-[var(--gold)] bg-[var(--surface)] p-5">
             <p className="text-xs font-semibold uppercase tracking-widest text-[var(--gold)]">
-              {t.parents.caseCardKicker}
+              {FORMATION_MODE ? t.formation.caseKickerSoon : t.parents.caseCardKicker}
             </p>
             <h4 className="font-display mt-1 text-lg font-semibold">{t.parents.caseCardTitle} — ${nextFee}</h4>
             <p className="mt-2 text-base text-[var(--dim)]">{t.parents.caseCardSummary}</p>
@@ -1061,7 +1179,7 @@ function ParentsBenefitsSection({ casePricing, withdrawalPricing }: { casePricin
           </article>
           <article className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
             <p className="text-xs font-semibold uppercase tracking-widest text-[var(--gold)]">
-              {t.withdrawal.gainKicker}
+              {FORMATION_MODE ? t.formation.gainKickerSoon : t.withdrawal.gainKicker}
             </p>
             <h4 className="font-display mt-1 text-lg font-semibold">{t.withdrawal.gainTitle} — ${withdrawalPricing.fee}</h4>
             <p className="mt-2 text-base text-[var(--dim)]">{t.withdrawal.gainSummary}</p>
@@ -1132,6 +1250,8 @@ function OnBoardSection({
         ))}
       </dl>
 
+      <p className="mt-5 text-lg font-semibold">{t.train.families}</p>
+
       <div className="mt-6 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
         <p className="text-base text-[var(--dim)]">
           <strong className="text-[var(--text)]">{t.train.bodyStrong}</strong> {t.train.bodyRest} (${nextFee})
@@ -1146,7 +1266,7 @@ function OnBoardSection({
         </Details>
         <div className="mt-4 flex flex-wrap gap-3">
           <a href="#case529" className={btnGold}>
-            {t.train.ctaBoard}, ${nextFee} {t.hero.ctaCaseSuffix}
+            {FORMATION_MODE ? t.formation.caseCtaSoon : `${t.train.ctaBoard}, $${nextFee} ${t.hero.ctaCaseSuffix}`}
           </a>
           <a href="#parents" className={btnGhost}>
             {t.train.ctaParents}
@@ -1161,8 +1281,37 @@ function OnBoardSection({
 }
 
 // ---------------------------------------------------------------------------
+// Formation notice — replaces a door's intake form while the Center is
+// in formation (Founder, 2026-11-13): the door is presented, priced, and
+// explained, but it takes nothing yet — no case, no booking, no fee. The
+// membership waitlist is the live intake, so the notice points there.
+// ---------------------------------------------------------------------------
+
+function FormationNotice({ kind }: { kind: "case" | "withdrawal" }) {
+  const { t } = useLang();
+  return (
+    <div className="mt-6 rounded-xl border-2 border-[var(--gold)] bg-[var(--surface)] p-5" role="status">
+      <p className="inline-block rounded-full bg-[var(--gold)] px-3 py-1 text-sm font-bold text-[#16294d]">
+        {t.formation.badge}
+      </p>
+      <h3 className="font-display mt-3 text-xl font-semibold">
+        {kind === "case" ? t.formation.caseNoticeTitle : t.formation.wdNoticeTitle}
+      </h3>
+      <p className="mt-2 max-w-3xl text-base text-[var(--dim)]">
+        {kind === "case" ? t.formation.caseNoticeBody : t.formation.wdNoticeBody}
+      </p>
+      <a href="#subscribe" className={`${btnGold} mt-4`}>
+        {t.formation.waitlistCta}
+      </a>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // The case door — one-time 529 case service, no membership needed.
 // Pricing: $99 founding for the first 50 completed cases, then $149.
+// In formation mode the door is shown as opening soon and takes no
+// cases (FORMATION_MODE above; the server refuses startCase529 too).
 // ---------------------------------------------------------------------------
 
 function CaseDoorSection({
@@ -1173,10 +1322,10 @@ function CaseDoorSection({
   const { t } = useLang();
   const nextFee = casePricing.nextCaseFee;
   return (
-    <section id="case529" aria-label={`Start a 529 case — $${nextFee} on success`} className="py-10">
+    <section id="case529" aria-label={FORMATION_MODE ? `529 case door — opening soon, in formation — $${nextFee} on success` : `Start a 529 case — $${nextFee} on success`} className="py-10">
       <SectionWithLogo
         logoClassName="h-16 w-16 sm:h-20 sm:w-20"
-        sub={t.caseDoor.sub}
+        sub={FORMATION_MODE ? t.formation.caseSub : t.caseDoor.sub}
       >
         {t.caseDoor.titleA} ${nextFee} {t.caseDoor.titleB}
       </SectionWithLogo>
@@ -1190,6 +1339,11 @@ function CaseDoorSection({
             <span className="font-display text-5xl font-semibold">${nextFee}</span>
             <span className="text-[var(--dim)]"> {t.caseDoor.priceUnit}</span>
           </p>
+          {FORMATION_MODE ? (
+            <p className="mt-2 inline-block rounded-full bg-[var(--gold)] px-3 py-1 text-sm font-bold text-[#16294d]">
+              {t.formation.badge}
+            </p>
+          ) : null}
           {casePricing.isFoundingPrice ? (
             <p className="mt-2 inline-block rounded-full bg-[var(--gold-soft)] px-3 py-1 text-sm font-semibold">
               {t.caseDoor.foundingOpenBadge}
@@ -1245,7 +1399,11 @@ function CaseDoorSection({
 
       <SelfServiceStrip doorId="ok529" />
 
-      <CaseStartForm casePricing={casePricing} />
+      {FORMATION_MODE ? (
+        <FormationNotice kind="case" />
+      ) : (
+        <CaseStartForm casePricing={casePricing} />
+      )}
     </section>
   );
 }
@@ -1407,10 +1565,10 @@ function WithdrawalSection({
   const { t } = useLang();
   const fee = withdrawalPricing.fee;
   return (
-    <section id="withdrawal" aria-label={`Book a guided withdrawal sitting — $${fee} on completion`} className="py-10">
+    <section id="withdrawal" aria-label={FORMATION_MODE ? `Guided withdrawal sittings — opening soon, in formation — $${fee} on completion` : `Book a guided withdrawal sitting — $${fee} on completion`} className="py-10">
       <SectionWithLogo
         logoClassName="h-16 w-16 sm:h-20 sm:w-20"
-        sub={t.withdrawal.sub}
+        sub={FORMATION_MODE ? t.formation.wdSub : t.withdrawal.sub}
       >
         {t.withdrawal.title}
       </SectionWithLogo>
@@ -1424,6 +1582,11 @@ function WithdrawalSection({
             <span className="font-display text-5xl font-semibold">${fee}</span>
             <span className="text-[var(--dim)]"> {t.withdrawal.priceUnit}</span>
           </p>
+          {FORMATION_MODE ? (
+            <p className="mt-2 inline-block rounded-full bg-[var(--gold)] px-3 py-1 text-sm font-bold text-[#16294d]">
+              {t.formation.badge}
+            </p>
+          ) : null}
           <p className="mt-2 inline-block rounded-full bg-[var(--gold-soft)] px-3 py-1 text-sm font-semibold">
             {t.withdrawal.samePrice}
           </p>
@@ -1471,7 +1634,11 @@ function WithdrawalSection({
 
       <SelfServiceStrip doorId="withdrawal529" />
 
-      <WithdrawalStartForm withdrawalPricing={withdrawalPricing} />
+      {FORMATION_MODE ? (
+        <FormationNotice kind="withdrawal" />
+      ) : (
+        <WithdrawalStartForm withdrawalPricing={withdrawalPricing} />
+      )}
     </section>
   );
 }
@@ -2074,6 +2241,16 @@ function Access529Section({
         {t.access.intro}
       </p>
 
+      <article className="mb-5 rounded-xl border border-[var(--gold)] bg-[var(--gold-soft)] p-5">
+        <h3 className="font-display text-xl font-semibold">{t.access.anyoneTitle}</h3>
+        <p className="mt-2 max-w-3xl text-base">{t.access.anyoneBody}</p>
+        <ul className="mt-3 grid gap-2 text-base font-medium sm:grid-cols-3">
+          <li>• {t.access.anyoneP1}</li>
+          <li>• {t.access.anyoneP2}</li>
+          <li>• {t.access.anyoneP3}</li>
+        </ul>
+      </article>
+
       <div className="grid gap-4 md:grid-cols-2">
         <article className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
           <p className="text-xs font-semibold uppercase tracking-widest text-[var(--gold)]">
@@ -2581,16 +2758,19 @@ function ServiceApplicationsPanel({ data }: { data: Dashboard }) {
 // Job Promotion board
 // ---------------------------------------------------------------------------
 
-// PUBLIC PREVIEW (Founder, 2026-11-13): exactly three verified openings
-// that close within days are shown to everyone as a "closing soon"
-// preview of Job Promotion. These three are hard-coded public content
-// with their official application links (from the 2026-11-13 verified
-// research report); the full board of 15 stays members-only behind the
-// lock in JobsSection, and no other listing is exposed here.
+// PUBLIC PREVIEW (Founder, 2026-11-13; upgraded 2026-11-20): six verified
+// Oklahoma City openings are shown to everyone as an "open jobs" preview
+// of Job Promotion. These six are hard-coded public content with their
+// official application links (verified 2026-11-20); the full board of 15
+// stays members-only behind the lock in JobsSection, and no other listing
+// is exposed here.
 const PREVIEW_APPLY_URLS = [
-  "https://oklahomadepartmentofhumanservices.applytojob.com/apply/Qs4mK88H5c/Case-Manager-III-Hiring-Event-11172026-OKC",
-  "https://www.usajobs.gov/job/891357800",
-  "https://fa-etyr-saasfaprod1.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_2/job/4365/?mode=job-location",
+  "https://oklahomadepartmentofhumanservices.applytojob.com/apply/iYbEhBGbDm/Case-Manager-III-Hiring-Event-12082026-OKC",
+  "https://oklahomadepartmentofhumanservices.applytojob.com/apply/Y9RPRP7NGj/Family-Services-Specialist-III-PART-TIME",
+  "https://careers.hobbylobby.com/current-openings/distribution",
+  "https://www.usajobs.gov/job/891447700",
+  "https://oklahomadepartmentofhumanservices.applytojob.com/apply/aOw2iJpftt/Child-Support-Specialist-III",
+  "https://okgov.wd1.myworkdayjobs.com/en-US/okgovjobs/details/Communication-and-Education-Supervisor_JR67818",
 ];
 
 function JobsPreviewSection() {
@@ -2611,7 +2791,7 @@ function JobsPreviewSection() {
             <p className="mt-2 text-base font-medium">{job.pay}</p>
             <p className="mt-2 text-base text-[var(--dim)]">{job.detail}</p>
             <p className="mt-2 text-sm text-[var(--dim)]">
-              {t.jobs.verifiedLine.replace("{date}", fmtDate("2026-11-13T12:00:00"))}
+              {t.jobs.verifiedLine.replace("{date}", fmtDate("2026-11-20T12:00:00"))}
             </p>
             <div className="mt-auto pt-4">
               <a href={PREVIEW_APPLY_URLS[i] ?? "#"} target="_blank" rel="noreferrer" className={btnPrimary}>
@@ -2625,6 +2805,7 @@ function JobsPreviewSection() {
     </section>
   );
 }
+
 
 function JobsSection({ memberId, memberEmail }: { memberId: number | null; memberEmail: string | null }) {
   const { t } = useLang();
@@ -3142,8 +3323,8 @@ function DoorsAndJourney() {
             if (!door || !pays) return null;
             const p = progressOf(id);
             return (
-              <li key={id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
-                <div className="min-w-0 flex-1">
+              <li key={id} className="flex flex-col gap-2 px-4 py-3">
+                <div className="min-w-0">
                   <p className="font-semibold leading-snug">{door.name}</p>
                   <p className="text-sm text-[var(--dim)]">{pays}</p>
                   <p className="mt-0.5 text-xs font-medium text-[var(--good)]">{t.doors.noFeeLine}</p>
@@ -3160,7 +3341,7 @@ function DoorsAndJourney() {
                   href={door.url}
                   target="_blank"
                   rel="noreferrer"
-                  className={btnGhost}
+                  className={`${btnGhost} w-full sm:w-auto sm:self-start`}
                   onClick={() => onRegisterClick(id)}
                 >
                   {t.doors.registerBtn} ↗
@@ -3168,7 +3349,7 @@ function DoorsAndJourney() {
                 {activeEmail.includes("@") && view && p?.status !== "completed" ? (
                   <button
                     type="button"
-                    className="text-sm font-semibold text-[var(--good)] underline"
+                    className="self-start text-sm font-semibold text-[var(--good)] underline"
                     disabled={complete.isPending}
                     onClick={() => complete.mutate(id)}
                   >
