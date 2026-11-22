@@ -80,6 +80,7 @@ import familyImg from "./assets/family-backpack.jpg";
 import okcImg from "./assets/okc-skyline.jpg";
 import logoImg from "./assets/logo-elc-usa.webp";
 import companionImg from "./assets/ai-companion-walk.webp";
+import companionVideo from "./assets/ai-companion-walk.mp4";
 
 type Dashboard = ApiResponse<typeof api, "getDashboard">;
 type Member = Dashboard["member"];
@@ -114,24 +115,16 @@ const DEFAULT_WITHDRAWAL_PRICING: WithdrawalPricing = { fee: 0 };
 // bank account is open; the forms below then take over again.
 const FORMATION_MODE = true;
 
+// ONE membership (Founder ruling, 2026-11-19): $99 one time per family
+// for the whole education life — no tiers, no monthly billing, no
+// renewal. The single entry keeps the key "family" so the waitlist and
+// staff application forms submit the same value as before.
 const TIER_OPTIONS = [
   {
-    key: "starter",
-    label: "Starter",
-    monthly: 15,
-    blurb: "One adult member. Member card, the Job Promotion board, Family Credit Support applications, and 529 Access — guidance, goal tracking, and reminders for Oklahoma's state 529 plans.",
-  },
-  {
     key: "family",
-    label: "Family",
-    monthly: 25,
-    blurb: "Parents join once — children are covered free under the same membership, each with their own profile and their own 529 Access goal.",
-  },
-  {
-    key: "family_plus",
-    label: "Family Plus",
-    monthly: 40,
-    blurb: "Everything in Family, plus priority routing of Family Credit Support applications to partner institutions.",
+    label: "Membership",
+    price: 99,
+    blurb: "One membership for the whole family — children covered free. The Member Card for the whole membership, every guided door on this website, the Job Promotion board, Family Credit Support, 529 Access tracking and reminders, and the AI family assistant's guidance in all six languages — from joining until the member gets a job.",
   },
 ] as const;
 
@@ -517,9 +510,14 @@ function AppInner() {
       <main className="mx-auto max-w-6xl px-4">
         {/* ---------- The companion: she knows your child ---------- */}
         <figure className="pt-8">
-          <img
-            src={companionImg}
-            alt={t.founderWalk.alt}
+          <video
+            src={companionVideo}
+            poster={companionImg}
+            autoPlay
+            muted
+            loop
+            playsInline
+            aria-label={t.founderWalk.alt}
             className="w-full rounded-2xl border border-[var(--border)]"
           />
           <figcaption className="font-display mt-4 text-center text-xl italic leading-snug sm:text-2xl">
@@ -728,7 +726,7 @@ function AppInner() {
           casePricing={casePricing}
         />
 
-        {/* ---------- Tiers ---------- */}
+        {/* ---------- Membership plan ---------- */}
         <section id="plans" aria-label={t.plans.title} className="py-10">
           <SectionWithLogo sub={t.plans.sub}>
             {t.plans.title}
@@ -741,7 +739,7 @@ function AppInner() {
               {t.plans.billingBody}
             </p>
           </Details>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-1 max-w-2xl">
             {TIER_OPTIONS.map((tier, idx) => (
               <article
                 key={tier.key}
@@ -749,12 +747,12 @@ function AppInner() {
               >
                 <h3 className="font-display text-xl font-semibold">{t.plans.tiers[idx]?.label ?? tier.label}</h3>
                 <p className="mt-2">
-                  <span className="font-display text-4xl font-semibold">${tier.monthly}</span>
+                  <span className="font-display text-4xl font-semibold">${tier.price}</span>
                   <span className="text-[var(--dim)]"> {t.plans.perMonth}</span>
                 </p>
                 <p className="mt-2 text-base text-[var(--dim)]">{t.plans.tiers[idx]?.blurb ?? tier.blurb}</p>
                 <p className="mt-3 text-sm font-medium text-[var(--good)]">
-                  = ${tier.monthly * 12} {t.plans.perYear}
+                  {t.plans.perYear}
                 </p>
               </article>
             ))}
@@ -853,6 +851,9 @@ function AppInner() {
           </div>
           <p>
             {t.footer.tagline}
+          </p>
+          <p className="mt-2">
+            Contact: <a href="mailto:contact@educationlifecenterusa.com" className="font-semibold text-[var(--text)] hover:underline">contact@educationlifecenterusa.com</a>
           </p>
           <Details summary={t.footer.fineSummary}>
             <p className="text-[var(--dim)]">
@@ -1866,7 +1867,7 @@ function WaitlistForm() {
           <select id="wl-tier" className={inputCls} value={tier} onChange={(e) => setTier(e.target.value as typeof tier)}>
             <option value="">{t.forms.tierUndecided}</option>
             {TIER_OPTIONS.map((tier, idx) => (
-              <option key={tier.key} value={tier.key}>{t.plans.tiers[idx]?.label ?? tier.label} — ${tier.monthly}/mo</option>
+              <option key={tier.key} value={tier.key}>{t.plans.tiers[idx]?.label ?? tier.label} — ${tier.price} {t.plans.perMonth}</option>
             ))}
           </select>
         </div>
@@ -1975,7 +1976,7 @@ function DashboardView({ data }: { data: Dashboard }) {
                 <p className="mt-3 text-white/60 text-sm">Member</p>
                 <p className="font-semibold">{member.fullName}</p>
                 <p className="mt-3 text-white/60 text-sm">Plan</p>
-                <p className="font-semibold">{member.tierLabel} · ${member.monthlyAmount}/mo</p>
+                <p className="font-semibold">{member.tierLabel} · ${member.monthlyAmount} one time</p>
                 {member.card.cardNumber ? (
                   <p className="mt-3 font-mono text-sm tracking-widest text-white/85">{member.card.cardNumber}</p>
                 ) : null}
@@ -3758,7 +3759,7 @@ function MembershipApplicationForm() {
           <select id="mp-tier" className={inputCls} value={tier} onChange={(e) => setTier(e.target.value as "starter" | "family" | "family_plus")}>
             {TIER_OPTIONS.map((o) => (
               <option key={o.key} value={o.key}>
-                {o.label} — ${o.monthly}/mo
+                {o.label} — ${o.price} one time
               </option>
             ))}
           </select>
