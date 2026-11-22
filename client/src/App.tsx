@@ -26,7 +26,7 @@
 // ongoing relationship — presented as "opens later", not the front door.
 //
 // CASE PRICING (Founder decision, 2026-11-11): $99 is the founding price
-// for the first 50 completed cases, then $149 standard. The page reads
+// for the first 50 completed cases. The page reads
 // the live pricing from getPublicStats (casePricing: the pricing rule
 // and the fee the next case will carry — no live counts on the public
 // action since 2026-11-13) and each case keeps
@@ -40,9 +40,8 @@
 // owner requests the withdrawal themselves on the state plan's site
 // while the Center guides the mechanics and paperwork — expense
 // checked, destination chosen, same-calendar-year rule kept, 1099-Q
-// explained. ONE simple price (Founder's fee ruling, 2026-11-12): $199
-// flat per completed sitting — read
-// live from getPublicStats (withdrawalPricing), due only when the
+// explained. ONE simple price (Founder's fee ruling, 2026-11-12) —
+// read live from getPublicStats (withdrawalPricing), due only when the
 // sitting completes, never a percentage of the withdrawal. The Center
 // never touches 529 money, never holds the owner's password, and gives
 // general education only — not investment advice, not tax preparation.
@@ -81,6 +80,7 @@ import familyImg from "./assets/family-backpack.jpg";
 import okcImg from "./assets/okc-skyline.jpg";
 import logoImg from "./assets/logo-elc-usa.webp";
 import companionImg from "./assets/ai-companion-walk.webp";
+import companionVideo from "./assets/ai-companion-walk.mp4";
 
 type Dashboard = ApiResponse<typeof api, "getDashboard">;
 type Member = Dashboard["member"];
@@ -94,18 +94,18 @@ type WithdrawalPricing = ApiResponse<typeof api, "getPublicStats">["withdrawalPr
 const DEFAULT_CASE_PRICING: CasePricing = {
   foundingLimit: 50,
   foundingFee: 99,
-  standardFee: 149,
+  standardFee: 99,
   nextCaseFee: 99,
   isFoundingPrice: true,
 };
 
-// One simple price (Founder's fee ruling, 2026-11-12): $199 flat per
-// completed guided withdrawal sitting.
-const DEFAULT_WITHDRAWAL_PRICING: WithdrawalPricing = { fee: 199 };
+// The guided withdrawal sitting fee (Founder's fee ruling, 2026-11-12)
+// is read live from getPublicStats; this is only a loading placeholder.
+const DEFAULT_WITHDRAWAL_PRICING: WithdrawalPricing = { fee: 0 };
 
 // FORMATION MODE (Founder, 2026-11-13): the site publishes in formation
 // mode until Education Life Center USA, LLC is filed and its bank
-// account exists. While true, the $99 case door and the $199 guided
+// account exists. While true, the $99 case door and the guided
 // withdrawal sittings show an "opening soon — in formation" notice
 // instead of their intake forms (the server refuses the intakes too),
 // there is no payment step anywhere on the page, and the membership
@@ -115,24 +115,16 @@ const DEFAULT_WITHDRAWAL_PRICING: WithdrawalPricing = { fee: 199 };
 // bank account is open; the forms below then take over again.
 const FORMATION_MODE = true;
 
+// ONE membership (Founder ruling, 2026-11-19): $99 one time per family
+// for the whole education life — no tiers, no monthly billing, no
+// renewal. The single entry keeps the key "family" so the waitlist and
+// staff application forms submit the same value as before.
 const TIER_OPTIONS = [
   {
-    key: "starter",
-    label: "Starter",
-    monthly: 15,
-    blurb: "One adult member. Member card, the Job Promotion board, Family Credit Support applications, and 529 Access — guidance, goal tracking, and reminders for Oklahoma's state 529 plans.",
-  },
-  {
     key: "family",
-    label: "Family",
-    monthly: 25,
-    blurb: "Parents join once — children are covered free under the same membership, each with their own profile and their own 529 Access goal.",
-  },
-  {
-    key: "family_plus",
-    label: "Family Plus",
-    monthly: 40,
-    blurb: "Everything in Family, plus priority routing of Family Credit Support applications to partner institutions.",
+    label: "Membership",
+    price: 99,
+    blurb: "One membership for the whole family — children covered free. The Member Card for the whole membership, every guided door on this website, the Job Promotion board, Family Credit Support, 529 Access tracking and reminders, and the AI family assistant's guidance in all six languages — from joining until the member gets a job.",
   },
 ] as const;
 
@@ -383,7 +375,6 @@ function AppInner() {
   const nextCaseFee = casePricing.nextCaseFee;
   const withdrawalPricing: WithdrawalPricing =
     stats.data?.withdrawalPricing ?? DEFAULT_WITHDRAWAL_PRICING;
-  const withdrawalFee = withdrawalPricing.fee;
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
@@ -428,7 +419,7 @@ function AppInner() {
           <nav aria-label="Main" className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-white/15 py-2 text-base font-medium text-white/90 md:text-lg">
             <a href="#glance" className="whitespace-nowrap hover:text-white hover:underline">{t.nav.glance}</a>
             <a href="#case529" className="whitespace-nowrap hover:text-white hover:underline">{t.nav.caseLink} — ${nextCaseFee}</a>
-            <a href="#withdrawal" className="whitespace-nowrap hover:text-white hover:underline">{t.nav.withdrawal} — ${withdrawalFee}</a>
+            <a href="#withdrawal" className="whitespace-nowrap hover:text-white hover:underline">{t.nav.withdrawal}</a>
             <a href="#parents" className="whitespace-nowrap hover:text-white hover:underline">{t.nav.parents}</a>
             <a href="#services" className="whitespace-nowrap hover:text-white hover:underline">{t.nav.services}</a>
             <a href="#access529" className="whitespace-nowrap hover:text-white hover:underline">{t.nav.access}</a>
@@ -489,7 +480,7 @@ function AppInner() {
             ) : casePricing.isFoundingPrice ? (
               <>{t.hero.foundingOpen}</>
             ) : (
-              <>The ${casePricing.foundingFee} {t.hero.foundingEnded} ${casePricing.standardFee}.</>
+              <>The ${casePricing.foundingFee} {t.hero.foundingEnded}</>
             )}
           </p>
           <p className="font-display mt-5 max-w-2xl text-xl italic leading-snug text-[var(--gold)] sm:text-2xl">
@@ -519,9 +510,14 @@ function AppInner() {
       <main className="mx-auto max-w-6xl px-4">
         {/* ---------- The companion: she knows your child ---------- */}
         <figure className="pt-8">
-          <img
-            src={companionImg}
-            alt={t.founderWalk.alt}
+          <video
+            src={companionVideo}
+            poster={companionImg}
+            autoPlay
+            muted
+            loop
+            playsInline
+            aria-label={t.founderWalk.alt}
             className="w-full rounded-2xl border border-[var(--border)]"
           />
           <figcaption className="font-display mt-4 text-center text-xl italic leading-snug sm:text-2xl">
@@ -542,13 +538,13 @@ function AppInner() {
               </article>
             ))}
             <article className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
-              <h3 className="font-display text-lg font-semibold leading-snug">${withdrawalFee} — {t.withdrawal.glanceT}</h3>
+              <h3 className="font-display text-lg font-semibold leading-snug">{t.withdrawal.glanceT}</h3>
               <p className="mt-1.5 text-sm text-[var(--dim)]">{t.withdrawal.glanceD}</p>
             </article>
           </div>
           <div className="mt-5 flex flex-wrap gap-3">
             <a href="#case529" className={btnGold}>{FORMATION_MODE ? t.formation.caseCtaSoon : `${t.glance.ctaCase} — $${nextCaseFee} ${t.hero.ctaCaseSuffix}`}</a>
-            <a href="#withdrawal" className={btnGhost}>{t.withdrawal.title.split(" — ")[0]} — ${withdrawalFee}</a>
+            <a href="#withdrawal" className={btnGhost}>{t.withdrawal.title.split(" — ")[0]}</a>
             <a href="#subscribe" className={btnGhost}>{t.glance.ctaWaitlist}</a>
           </div>
         </section>
@@ -587,10 +583,10 @@ function AppInner() {
               529 money goes directly from the parent to Oklahoma's state plan — the Center
               guides, tracks, and reminds, and never holds 529 money or gives personal
               investment advice. The 529 case service charges a flat fee for guidance —
-              ${casePricing.foundingFee} founding price for the first {casePricing.foundingLimit} completed cases, then ${casePricing.standardFee} standard
+              ${casePricing.foundingFee} founding price for the first {casePricing.foundingLimit} completed cases
               (the next case is ${nextCaseFee}) — due only when a case succeeds, never a percentage of any account,
               and advisor-sold 529 guidance carries no success fee. Guided Withdrawal
-              sittings carry one simple flat fee — ${withdrawalPricing.fee} — due only
+              sittings carry one simple flat fee, due only
               when a sitting completes (the withdrawal correctly
               requested by the account owner and on its way), never a percentage of any
               withdrawal; the sitting is general education and paperwork guidance only,
@@ -730,7 +726,7 @@ function AppInner() {
           casePricing={casePricing}
         />
 
-        {/* ---------- Tiers ---------- */}
+        {/* ---------- Membership plan ---------- */}
         <section id="plans" aria-label={t.plans.title} className="py-10">
           <SectionWithLogo sub={t.plans.sub}>
             {t.plans.title}
@@ -743,7 +739,7 @@ function AppInner() {
               {t.plans.billingBody}
             </p>
           </Details>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-1 max-w-2xl">
             {TIER_OPTIONS.map((tier, idx) => (
               <article
                 key={tier.key}
@@ -751,12 +747,12 @@ function AppInner() {
               >
                 <h3 className="font-display text-xl font-semibold">{t.plans.tiers[idx]?.label ?? tier.label}</h3>
                 <p className="mt-2">
-                  <span className="font-display text-4xl font-semibold">${tier.monthly}</span>
+                  <span className="font-display text-4xl font-semibold">${tier.price}</span>
                   <span className="text-[var(--dim)]"> {t.plans.perMonth}</span>
                 </p>
                 <p className="mt-2 text-base text-[var(--dim)]">{t.plans.tiers[idx]?.blurb ?? tier.blurb}</p>
                 <p className="mt-3 text-sm font-medium text-[var(--good)]">
-                  = ${tier.monthly * 12} {t.plans.perYear}
+                  {t.plans.perYear}
                 </p>
               </article>
             ))}
@@ -856,9 +852,12 @@ function AppInner() {
           <p>
             {t.footer.tagline}
           </p>
+          <p className="mt-2">
+            Contact: <a href="mailto:contact@educationlifecenterusa.com" className="font-semibold text-[var(--text)] hover:underline">contact@educationlifecenterusa.com</a>
+          </p>
           <Details summary={t.footer.fineSummary}>
             <p className="text-[var(--dim)]">
-              The Center opens with the 529 case door: a flat fee for guidance — ${casePricing.foundingFee} founding price for the first {casePricing.foundingLimit} completed cases, then ${casePricing.standardFee} standard; the next case is ${nextCaseFee} — due only when a case succeeds
+              The Center opens with the 529 case door: a flat fee for guidance — ${casePricing.foundingFee} founding price for the first {casePricing.foundingLimit} completed cases; the next case is ${nextCaseFee} — due only when a case succeeds
               and never a percentage of any account; advisor-sold 529 guidance carries no
               success fee. The membership opens later, as the ongoing relationship behind
               the case door. Membership payments are made by fintech — card or bank transfer
@@ -873,7 +872,7 @@ function AppInner() {
               the state plan, and the Center provides general education — not personal
               investment advice — and never holds 529 money. Guided Withdrawal sittings —
               the guided service for taking money out when it is needed — carry one simple
-              flat fee of ${withdrawalPricing.fee}, due only when a sitting completes
+              flat fee, due only when a sitting completes
               and never a percentage of any withdrawal; the
               account owner requests every withdrawal themselves on the state plan's site,
               and the Center only guides. The self-service doors are free to use: every
@@ -1181,7 +1180,7 @@ function ParentsBenefitsSection({ casePricing, withdrawalPricing }: { casePricin
             <p className="text-xs font-semibold uppercase tracking-widest text-[var(--gold)]">
               {FORMATION_MODE ? t.formation.gainKickerSoon : t.withdrawal.gainKicker}
             </p>
-            <h4 className="font-display mt-1 text-lg font-semibold">{t.withdrawal.gainTitle} — ${withdrawalPricing.fee}</h4>
+            <h4 className="font-display mt-1 text-lg font-semibold">{t.withdrawal.gainTitle}</h4>
             <p className="mt-2 text-base text-[var(--dim)]">{t.withdrawal.gainSummary}</p>
             <Details summary={t.parents.gainSummary}>
             <ul className="list-disc space-y-1.5 pl-5 text-base text-[var(--dim)]">
@@ -1309,7 +1308,7 @@ function FormationNotice({ kind }: { kind: "case" | "withdrawal" }) {
 
 // ---------------------------------------------------------------------------
 // The case door — one-time 529 case service, no membership needed.
-// Pricing: $99 founding for the first 50 completed cases, then $149.
+// Pricing: $99 founding for the first 50 completed cases.
 // In formation mode the door is shown as opening soon and takes no
 // cases (FORMATION_MODE above; the server refuses startCase529 too).
 // ---------------------------------------------------------------------------
@@ -1361,7 +1360,7 @@ function CaseDoorSection({
           </p>
           <ul className="mt-4 list-disc space-y-2 pl-5 text-base text-[var(--dim)]">
             <li>{t.caseDoor.bullet1}</li>
-            <li>{t.caseDoor.bullet2} ${casePricing.foundingFee} {t.caseDoor.bullet2b} {casePricing.foundingLimit} {t.caseDoor.bullet2c} ${casePricing.standardFee} {t.caseDoor.bullet2d}</li>
+            <li>{t.caseDoor.bullet2} ${casePricing.foundingFee} {t.caseDoor.bullet2b} {casePricing.foundingLimit} {t.caseDoor.bullet2c}</li>
             <li>{t.caseDoor.bullet3}</li>
           </ul>
         </div>
@@ -1537,7 +1536,7 @@ function CaseStartForm({ casePricing }: { casePricing: CasePricing }) {
 // ---------------------------------------------------------------------------
 // Guided Withdrawal — the completed service at the other end of the
 // journey (Founder, 2026-11-12). One simple price (Founder's fee
-// ruling): $199 flat per completed sitting — read live from
+// ruling) — read live from
 // getPublicStats (withdrawalPricing), due only
 // when the sitting completes, never a percentage of the withdrawal.
 // The owner requests the withdrawal themselves on the state plan's
@@ -1563,9 +1562,8 @@ function WithdrawalSection({
   withdrawalPricing: WithdrawalPricing;
 }) {
   const { t } = useLang();
-  const fee = withdrawalPricing.fee;
   return (
-    <section id="withdrawal" aria-label={FORMATION_MODE ? `Guided withdrawal sittings — opening soon, in formation — $${fee} on completion` : `Book a guided withdrawal sitting — $${fee} on completion`} className="py-10">
+    <section id="withdrawal" aria-label={FORMATION_MODE ? `Guided withdrawal sittings — opening soon, in formation` : `Book a guided withdrawal sitting`} className="py-10">
       <SectionWithLogo
         logoClassName="h-16 w-16 sm:h-20 sm:w-20"
         sub={FORMATION_MODE ? t.formation.wdSub : t.withdrawal.sub}
@@ -1577,10 +1575,6 @@ function WithdrawalSection({
         <div className="rounded-xl border-2 border-[var(--gold)] bg-[var(--surface)] p-5 lg:col-span-2">
           <p className="text-xs font-semibold uppercase tracking-widest text-[var(--gold)]">
             {t.withdrawal.priceKicker}
-          </p>
-          <p className="mt-3">
-            <span className="font-display text-5xl font-semibold">${fee}</span>
-            <span className="text-[var(--dim)]"> {t.withdrawal.priceUnit}</span>
           </p>
           {FORMATION_MODE ? (
             <p className="mt-2 inline-block rounded-full bg-[var(--gold)] px-3 py-1 text-sm font-bold text-[#16294d]">
@@ -1767,7 +1761,7 @@ function WithdrawalStartForm({ withdrawalPricing }: { withdrawalPricing: Withdra
           {start.isPending ? t.withdrawal.saving : t.withdrawal.submit}
         </button>
         <p className="text-sm text-[var(--dim)]">
-          ${withdrawalPricing.fee} {t.withdrawal.submitNoteA}
+          {t.withdrawal.submitNoteA}
         </p>
       </div>
     </form>
@@ -1873,7 +1867,7 @@ function WaitlistForm() {
           <select id="wl-tier" className={inputCls} value={tier} onChange={(e) => setTier(e.target.value as typeof tier)}>
             <option value="">{t.forms.tierUndecided}</option>
             {TIER_OPTIONS.map((tier, idx) => (
-              <option key={tier.key} value={tier.key}>{t.plans.tiers[idx]?.label ?? tier.label} — ${tier.monthly}/mo</option>
+              <option key={tier.key} value={tier.key}>{t.plans.tiers[idx]?.label ?? tier.label} — ${tier.price} {t.plans.perMonth}</option>
             ))}
           </select>
         </div>
@@ -1982,7 +1976,7 @@ function DashboardView({ data }: { data: Dashboard }) {
                 <p className="mt-3 text-white/60 text-sm">Member</p>
                 <p className="font-semibold">{member.fullName}</p>
                 <p className="mt-3 text-white/60 text-sm">Plan</p>
-                <p className="font-semibold">{member.tierLabel} · ${member.monthlyAmount}/mo</p>
+                <p className="font-semibold">{member.tierLabel} · ${member.monthlyAmount} one time</p>
                 {member.card.cardNumber ? (
                   <p className="mt-3 font-mono text-sm tracking-widest text-white/85">{member.card.cardNumber}</p>
                 ) : null}
@@ -3765,7 +3759,7 @@ function MembershipApplicationForm() {
           <select id="mp-tier" className={inputCls} value={tier} onChange={(e) => setTier(e.target.value as "starter" | "family" | "family_plus")}>
             {TIER_OPTIONS.map((o) => (
               <option key={o.key} value={o.key}>
-                {o.label} — ${o.monthly}/mo
+                {o.label} — ${o.price} one time
               </option>
             ))}
           </select>
