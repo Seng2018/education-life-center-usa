@@ -80,7 +80,7 @@ import familyImg from "./assets/family-backpack.jpg";
 import okcImg from "./assets/okc-skyline.jpg";
 import logoImg from "./assets/logo-elc-usa.webp";
 import companionImg from "./assets/ai-companion-walk.webp";
-import companionVideo from "./assets/ai-companion-walk.mp4";
+import companionVideo from "./assets/elc-usa-catherina-walk-30s-logo-locked.mp4";
 
 type Dashboard = ApiResponse<typeof api, "getDashboard">;
 type Member = Dashboard["member"];
